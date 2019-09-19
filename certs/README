@@ -1,0 +1,27 @@
+開発でのみ使用するオレオレ証明書
+
+以下、発行手順
+
+$ openssl genrsa 2048 > server.key
+$ openssl req -new -key server.key > server.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:JP
+State or Province Name (full name) [Some-State]:Hokkaido
+Locality Name (eg, city) []:Sapporo
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:H.A.N.D., Inc.
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:         
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+$ openssl x509 -in server.csr -days 2048 -req -signkey server.key > server.crt
+
