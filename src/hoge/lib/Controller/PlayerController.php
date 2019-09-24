@@ -27,7 +27,7 @@ class PlayerController
         // parameters (id)
         $id = $args['id'];
 
-        $pdo = $this->container->get('db'); /** @var PDO $pdo */
+        $pdo = $this->container->get('userdb'); /** @var PDO $pdo */
         $stmt = $pdo->prepare('select * from player where player_id=:id');
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -48,7 +48,7 @@ class PlayerController
         $input = json_decode($body);
         $name = $input->player_name;
 
-        $pdo = $this->container->get('db'); /** @var PDO $pdo */
+        $pdo = $this->container->get('userdb'); /** @var PDO $pdo */
         $stmt = $pdo->prepare('insert into player(player_name) values(:name)');
         $stmt->bindParam(':name', $name, PDO::PARAM_STR);
 
@@ -66,7 +66,7 @@ class PlayerController
         $id = $args['id'];
         $name = $input->player_name;
 
-        $pdo = $this->container->get('db'); /** @var PDO $pdo */
+        $pdo = $this->container->get('userdb'); /** @var PDO $pdo */
         $stmt = $pdo->prepare('update player set player_name=:name where player_id=:id');
         $stmt->bindParam(':name', $name, PDO::PARAM_STR);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
