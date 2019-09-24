@@ -5,8 +5,15 @@ ARG environment
 RUN apk upgrade --update \
   && apk --no-cache --virtual .build-deps add make g++ gcc re2c autoconf \
   && apk --no-cache add gettext-dev libzip-dev curl-dev \
-  && docker-php-ext-install -j$(nproc) gettext mbstring zip mysqli opcache ctype json bcmath sockets curl \
+  && docker-php-ext-install -j$(nproc) gettext mbstring zip opcache ctype json bcmath sockets curl \
   && pecl channel-update pecl.php.net
+
+# PDO(MySQL)
+RUN docker-php-ext-install -j$(nproc) pdo_mysql
+
+# PDO(PostgreSQL)
+RUN apk --no-cache add postgresql-dev \
+  && docker-php-ext-install -j$(nproc) pdo_pgsql
 
 # YAML (2.0.4)extension=yaml.so
 RUN apk --no-cache add yaml-dev \

@@ -20,6 +20,8 @@ services:
       context: ./web_hoge
       args:
         - environment=local
+    links:
+      - mysql
     environment:
       XDEBUG_CONFIG: "remote_host=172.28.0.1"
       PHP_IDE_CONFIG: "serverName=hoge.localhost"
