@@ -1,5 +1,6 @@
 <?php
 
+use Aws\DynamoDb\DynamoDbClient;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -12,6 +13,7 @@ use Hoge\ExampleBeforeMiddleware;
 use Hoge\Controller\PlayerController;
 use Hoge\Controller\PlayerCreatedLogController;
 use Hoge\Controller\RedisController;
+use Hoge\Controller\DynamodbController;
 
 /** @var Composer\Autoload\ClassLoader $loader */
 $loader = require __DIR__ . '/../../vendor/autoload.php';
@@ -34,6 +36,10 @@ $containerBuilder->addDefinitions([
         ],
         'redis' => [
             'host' => 'redis'
+        ],
+        'dynamodb' => [
+            'endpoint' => 'http://dynamodb:8000',
+            'region' => 'ap-northeast-1'
         ]
     ],
     'userdb' => function (ContainerInterface $container) {
@@ -63,6 +69,22 @@ $containerBuilder->addDefinitions([
         $redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_IGBINARY);
 
         return $redis;
+    },
+    'dynamodb' => function (ContainerInterface $container) {
+        $settings = $container->get('settings')['dynamodb'];
+
+        $sdk = new Aws\Sdk([
+            'endpoint' => $settings['endpoint'],
+            'region' => $settings['region'],
+            'version' => '2012-08-10',
+            'credentials' => [
+                'key' => 'dummy-key',
+                'secret' => 'dummy-secret'
+            ]
+        ]);
+
+        $dynamodb = $sdk->createDynamoDb();
+        return $dynamodb;
     }
 ]);
 $container = $containerBuilder->build();
@@ -97,6 +119,11 @@ $app->group('/redis', function (RouteCollectorProxy $group) {
     $group->post('', RedisController::class . ':post');
     $group->put('/{key}', RedisController::class . ':put');
     $group->delete('/{key}', RedisController::class . ':delete');
+});
+
+$app->group('/dynamodb', function (RouteCollectorProxy $group) {
+    $group->get('/{key}', DynamodbController::class . ':get');
+    $group->post('', DynamodbController::class . ':post');
 });
 
 

@@ -24,6 +24,7 @@ services:
       - mysql
       - postgresql
       - redis
+      - dynamodb
     environment:
       XDEBUG_CONFIG: "remote_host=172.28.0.1"
       PHP_IDE_CONFIG: "serverName=hoge.localhost"
@@ -67,6 +68,14 @@ services:
     ports:
       - "15432:5432"
     container_name: postgresql
+    networks:
+      - local_net
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb
+    ports:
+      - "18000:8000"
     networks:
       - local_net
 
