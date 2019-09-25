@@ -11,6 +11,7 @@ use Hoge\ExampleAfterMiddleware;
 use Hoge\ExampleBeforeMiddleware;
 use Hoge\Controller\PlayerController;
 use Hoge\Controller\PlayerCreatedLogController;
+use Hoge\Controller\RedisController;
 
 /** @var Composer\Autoload\ClassLoader $loader */
 $loader = require __DIR__ . '/../../vendor/autoload.php';
@@ -30,6 +31,9 @@ $containerBuilder->addDefinitions([
             'dbname' => 'logdb',
             'user' => 'root',
             'password' => 'hogehoge'
+        ],
+        'redis' => [
+            'host' => 'redis'
         ]
     ],
     'userdb' => function (ContainerInterface $container) {
@@ -51,6 +55,14 @@ $containerBuilder->addDefinitions([
             PDO::ATTR_EMULATE_PREPARES => false
         ];
         return new PDO($dsn, $settings['user'], $settings['password'], $options);
+    },
+    'redis' => function (ContainerInterface $container) {
+        $settings = $container->get('settings')['redis'];
+        $redis = new Redis();
+        $redis->connect($settings['host']);
+        $redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_IGBINARY);
+
+        return $redis;
     }
 ]);
 $container = $containerBuilder->build();
@@ -79,6 +91,14 @@ $app->group('/player_created', function (RouteCollectorProxy $group) {
     $group->get('/{id}', PlayerCreatedLogController::class . ':get');
     $group->get('', PlayerCreatedLogController::class . ':list');
 });
+
+$app->group('/redis', function (RouteCollectorProxy $group) {
+    $group->get('/{key}', RedisController::class . ':get');
+    $group->post('', RedisController::class . ':post');
+    $group->put('/{key}', RedisController::class . ':put');
+    $group->delete('/{key}', RedisController::class . ':delete');
+});
+
 
 $app->run();
 

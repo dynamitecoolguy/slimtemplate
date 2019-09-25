@@ -4,6 +4,7 @@
         "slim/psr7": "0.5.0",
         "php-di/php-di": "6.0.9",
         "ext-pdo": "^7.2",
-        "ext-json": "^1.6"
+        "ext-json": "^1.6",
+        "ext-redis": "^3.1"
     }
 }
