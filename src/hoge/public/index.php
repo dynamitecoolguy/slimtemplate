@@ -13,6 +13,7 @@ use Hoge\Controller\PlayerController;
 use Hoge\Controller\PlayerCreatedLogController;
 use Hoge\Controller\RedisController;
 use Hoge\Controller\DynamodbController;
+use Hoge\Controller\StorageController;
 
 /** @var Composer\Autoload\ClassLoader $loader */
 $loader = require __DIR__ . '/../../vendor/autoload.php';
@@ -38,6 +39,10 @@ $containerBuilder->addDefinitions([
         ],
         'dynamodb' => [
             'endpoint' => 'http://dynamodb:8000',
+            'region' => 'ap-northeast-1'
+        ],
+        'storage' => [
+            'endpoint' => 'http://storage:9000',
             'region' => 'ap-northeast-1'
         ]
     ],
@@ -84,6 +89,22 @@ $containerBuilder->addDefinitions([
 
         $dynamodb = $sdk->createDynamoDb();
         return $dynamodb;
+    },
+    'storage' => function (ContainerInterface $container) {
+        $settings = $container->get('settings')['storage'];
+        $sdk = new Aws\Sdk([
+            'endpoint' => $settings['endpoint'],
+            'region' => $settings['region'],
+            'version' => '2006-03-01',
+            'credentials' => [
+                'key' => 'minio',
+                'secret' => 'miniminio'
+            ],
+            //'bucket_endpoint' => true,
+            'use_path_style_endpoint' => true
+        ]);
+        $s3 = $sdk->createS3();
+        return $s3;
     }
 ]);
 $container = $containerBuilder->build();
@@ -125,6 +146,10 @@ $app->group('/dynamodb', function (RouteCollectorProxy $group) {
     $group->post('', DynamodbController::class . ':post');
 });
 
+$app->group('/storage', function (RouteCollectorProxy $group) {
+    $group->get('/{filename}', StorageController::class . ':get');
+    $group->post('', StorageController::class . ':post');
+});
 
 $app->run();
 
