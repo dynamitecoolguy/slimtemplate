@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  web_front:
+    build:
+      args:
+        - environment=local
+        - environmentkey=
+
+  web_hoge:
+    build:
+      args:
+        - environment=local
+        - environmentkey=
+    environment:
+      XDEBUG_CONFIG: "remote_host=172.28.0.1"
+      PHP_IDE_CONFIG: "serverName=hoge.localhost"
+    domainname: localhost

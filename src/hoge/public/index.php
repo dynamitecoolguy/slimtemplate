@@ -19,33 +19,11 @@ use Hoge\Controller\StorageController;
 $loader = require __DIR__ . '/../../vendor/autoload.php';
 $loader->addPsr4('Hoge\\', __DIR__ . '/../lib');
 
+$settings = require __DIR__ . '/../../settings.php';
+
 $containerBuilder = new ContainerBuilder();
 $containerBuilder->addDefinitions([
-    'settings' => [
-        'userdb' => [
-            'host' => 'mysql',
-            'dbname' => 'userdb',
-            'user' => 'scott',
-            'password' => 'tiger'
-        ],
-        'logdb' => [
-            'host' => 'postgresql',
-            'dbname' => 'logdb',
-            'user' => 'root',
-            'password' => 'hogehoge'
-        ],
-        'redis' => [
-            'host' => 'redis'
-        ],
-        'dynamodb' => [
-            'endpoint' => 'http://dynamodb:8000',
-            'region' => 'ap-northeast-1'
-        ],
-        'storage' => [
-            'endpoint' => 'http://storage:9000',
-            'region' => 'ap-northeast-1'
-        ]
-    ],
+    'settings' => $settings,
     'userdb' => function (ContainerInterface $container) {
         $settings = $container->get('settings')['userdb'];
         $dsn = 'mysql:host=' . $settings['host'] . ';dbname=' . $settings['dbname'];

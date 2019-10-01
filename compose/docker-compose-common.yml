@@ -11,23 +11,17 @@ services:
       - ../certs:/etc/certs:ro
     container_name: web_front
     networks:
-      - local_net
+      - private_net
 
   web_hoge:
     build:
       context: ./web_hoge
-      args:
-        - environment=local
-    environment:
-      XDEBUG_CONFIG: "remote_host=172.28.0.1"
-      PHP_IDE_CONFIG: "serverName=hoge.localhost"
-    domainname: localhost
     volumes:
       - ../src/hoge:/var/www/hoge
       - ../src/vendor:/var/www/vendor
     container_name: web_hoge
     networks:
-      - local_net
+      - private_net
 
   redis:
     build:
@@ -40,7 +34,7 @@ services:
       - net.core.somaxconn=1024
     container_name: redis
     networks:
-      - local_net
+      - private_net
 
   mysql:
     build:
@@ -51,7 +45,7 @@ services:
       - "13306:3306"
     container_name: mysql
     networks:
-      - local_net
+      - private_net
 
   postgresql:
     build:
@@ -62,7 +56,7 @@ services:
       - "15432:5432"
     container_name: postgresql
     networks:
-      - local_net
+      - private_net
 
   dynamodb:
     image: amazon/dynamodb-local
@@ -70,7 +64,7 @@ services:
     ports:
       - "18000:8000"
     networks:
-      - local_net
+      - private_net
 
   storage:
     image: minio/minio
@@ -84,7 +78,7 @@ services:
       MINIO_SECRET_KEY: miniminio
     command: server /data
     networks:
-      - local_net
+      - private_net
 
 volumes:
   redis-data:
@@ -93,7 +87,7 @@ volumes:
   storage-data:
 
 networks:
-  local_net:
+  private_net:
     driver: bridge
     ipam:
       driver: default

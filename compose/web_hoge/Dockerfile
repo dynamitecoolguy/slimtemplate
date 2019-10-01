@@ -1,6 +1,7 @@
 FROM php:7.3.9-fpm-alpine3.10
 
 ARG environment
+ARG environmentkey=""
 
 RUN apk upgrade --update \
   && apk --no-cache --virtual .build-deps add make g++ gcc re2c autoconf \
@@ -48,6 +49,13 @@ RUN if [ "${environment}" = "local" ]; then \
   && echo "xdebug.remote_connect_back=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
   && echo "xdebug.remote_autostart=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
   ; fi
+
+# settings
+COPY settings.${environment}.php /var/www/settings.php
+RUN sed -i -e"s/{ENVKEY}/${environmentkey}/" /var/www/settings.php
+
+# PHP conf
+COPY php.${environment}.ini /usr/local/etc/php/conf.d/php.ini
 
 RUN apk del --purge .build-deps \
   && docker-php-source delete \

@@ -1,6 +1,11 @@
 FROM nginx:1.17.3
 
-COPY default.conf /etc/nginx/conf.d/default.conf
+ARG environment
+ARG environmentkey=""
+
+# settings
+COPY ${environment}.conf /etc/nginx/conf.d/default.conf
+RUN sed -i -e"s/{ENVKEY}/${environmentkey}/" /etc/nginx/conf.d/default.conf
 
 RUN deluser www-data \
     && addgroup --system --gid 1000 www-data \
