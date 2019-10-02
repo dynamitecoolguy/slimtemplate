@@ -1,6 +1,10 @@
 # buildspec-dev.yml
 version: 0.2
 
+env:
+  variables:
+    ENVKEY: orig
+
 phases:
   install:
     runtime-versions:
@@ -8,7 +12,7 @@ phases:
 
   pre_build:
     commands:
-      - echo "PREBUILD"
+      - echo "PREBUILD:$ENVKEY"
 
   build:
     commands:
@@ -16,4 +20,7 @@ phases:
 
   post_build:
     commands:
-      - aws s3 sync s3://d941fa982d745-images/dev/$ENVKEY
+      - echo "POSTBUILD:$ENVKEY"
+      - echo `pwd`
+      - ls
+      #- aws s3 sync s3://d941fa982d745-images/dev/$ENVKEY
