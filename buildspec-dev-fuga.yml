@@ -1,0 +1,15 @@
+# buildspec-dev-fuga.yml
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - true
+
+  build:
+    commands:
+      - ENVKEY=fuga && cd compose && docker-compose -f docker-compose-common.yml -f docker-compose-development.yml build
+
+  post_build:
+    commands:
+      - aws s3 sync s3://d941fa982d745-images/dev-fuga/

@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  web_front:
+    build:
+      args:
+        - environment=development
+        - environmentkey=${ENVKEY}
+
+  web_hoge:
+    build:
+      args:
+        - environment=development
+        - environmentkey=${ENVKEY}
+    domainname: spock.jp
