@@ -8,7 +8,7 @@ phases:
 
   build:
     commands:
-      - ENVKEY=fuga && cd compose && docker-compose -f docker-compose-common.yml -f docker-compose-development.yml build
+      - cd compose && ENVKEY=fuga docker-compose -f docker-compose-common.yml -f docker-compose-development.yml build
 
   post_build:
     commands:
