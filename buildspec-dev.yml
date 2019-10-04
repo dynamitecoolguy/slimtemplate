@@ -16,7 +16,9 @@ phases:
 
   build:
     commands:
-      - cd compose && docker-compose -f docker-compose-common.yml -f docker-compose-development.yml build
+      - docker build -t slimtemplate:latest --build-arg ENVKEY=$ENVKEY
+      # - docker run --privileged -d -it slimtemplate:latest
+      #- cd compose && docker-compose -f docker-compose-common.yml -f docker-compose-development.yml build
 
   post_build:
     commands:

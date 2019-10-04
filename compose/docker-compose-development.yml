@@ -12,4 +12,3 @@ services:
       args:
         - environment=development
         - environmentkey=${ENVKEY}
-    domainname: spock.jp
