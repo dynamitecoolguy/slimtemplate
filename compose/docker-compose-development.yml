@@ -5,10 +5,8 @@ services:
     build:
       args:
         - environment=development
-        - environmentkey=${ENVKEY}
 
   web_hoge:
     build:
       args:
         - environment=development
-        - environmentkey=${ENVKEY}
