@@ -33,10 +33,6 @@ class DynamodbController
                     [
                         'AttributeName' => 'key',
                         'AttributeType' => 'S'
-                    ],
-                    [
-                        'AttributeName' => 'value',
-                        'AttributeType' => 'S'
                     ]
                 ],
                 'KeySchema' => [
