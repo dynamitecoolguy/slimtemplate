@@ -41,7 +41,7 @@ RUN curl -fsSL https://github.com/phpredis/phpredis/archive/5.0.2.tar.gz -o redi
   && docker-php-ext-install -j$(nproc) redis
 
 # xdebug(2.7.2) extension=xdebug.so
-RUN if [ "${environment}" = "local" ]; then \
+RUN if [ "${environment}" = "local" -o "${environment}" = "localforward" ]; then \
      pecl install xdebug-2.7.2 \
   && docker-php-ext-enable xdebug \
   && echo "xdebug.remote_enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
@@ -54,6 +54,23 @@ COPY settings.php /var/www/settings.php
 
 # PHP conf
 COPY php.ini /usr/local/etc/php/conf.d/php.ini
+
+# COPY entrypoint
+COPY docker-php-entrypoint /docker-php-entrypoint
+COPY nginx.conf /nginx.conf
+COPY nginx-server.conf /nginx-server.conf
+COPY zzz-socket.conf /zzz-socket.conf
+RUN if [ "${environment}" = "localforward" ]; then \
+     cp /docker-php-entrypoint /usr/local/bin/docker-php-entrypoint \
+  && chmod +x /usr/local/bin/docker-php-entrypoint \
+  && apk --no-cache add nginx \
+  && cp /nginx.conf /etc/nginx/nginx.conf \
+  && cp /nginx-server.conf /etc/nginx/conf.d/default.conf \
+  && mkdir /var/run/nginx \
+  && cp /zzz-socket.conf /usr/local/etc/php-fpm.d \
+  && mkdir /var/run/php-fpm \
+  && chown 1000:1000 /var/run/php-fpm \
+  ; fi
 
 RUN apk del --purge .build-deps \
   && docker-php-source delete \
