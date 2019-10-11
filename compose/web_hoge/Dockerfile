@@ -1,83 +1,90 @@
-FROM php:7.3.9-fpm-alpine3.10
+FROM alpine:3.10.2
 
 ARG environment
 
 RUN apk upgrade --update \
-  && apk --no-cache --virtual .build-deps add make g++ gcc re2c autoconf \
-  && apk --no-cache add gettext-dev libzip-dev curl-dev \
-  && docker-php-ext-install -j$(nproc) gettext mbstring zip opcache ctype json bcmath sockets curl \
-  && pecl channel-update pecl.php.net
+  && apk --no-cache --virtual .build-deps add make g++ gcc re2c autoconf curl \
+  && apk --no-cache add gettext-dev libzip-dev curl-dev
+
+RUN apk --no-cache add supervisor tzdata nginx php7 php7-fpm \
+     php7-gettext php7-mbstring php7-zip php7-ctype php7-json php7-bcmath php7-sockets php7-curl php7-simplexml \
+     php7-pecl-apcu php7-pecl-igbinary php7-pecl-msgpack
 
 # PDO(MySQL)
-RUN docker-php-ext-install -j$(nproc) pdo_mysql
+RUN apk --no-cache add mariadb-dev php7-pdo_mysql
 
 # PDO(PostgreSQL)
-RUN apk --no-cache add postgresql-dev \
-  && docker-php-ext-install -j$(nproc) pdo_pgsql
+RUN apk --no-cache add postgresql-dev php7-pdo_pgsql
 
-# YAML (2.0.4)extension=yaml.so
-RUN apk --no-cache add yaml-dev \
-  && pecl install yaml-2.0.4 \
-  && docker-php-ext-enable yaml
+# YAML (2.0.4)
+RUN apk --no-cache add yaml-dev php7-pecl-yaml
 
-# APCu (5.1.17)  extension=apcu.so
-RUN pecl install apcu-5.1.17 \
-  && docker-php-ext-enable apcu
-
-# igbinary (3.0.1) extension=igbinary.so
-RUN pecl install igbinary-3.0.1 \
-  && docker-php-ext-enable igbinary
-
-# msgpack (2.0.3) extension=msgpack.so
-RUN pecl install msgpack-2.0.3 \
-  && docker-php-ext-enable msgpack
+# install phpize
+RUN apk --no-cache add php7-dev
 
 # redis (5.0.2) extension=redis.so
 RUN curl -fsSL https://github.com/phpredis/phpredis/archive/5.0.2.tar.gz -o redis.tar.gz \
   && mkdir -p /usr/src/php/ext/redis \
   && tar xzf redis.tar.gz -C /usr/src/php/ext/redis --strip-components=1 \
   && rm redis.tar.gz \
-  && docker-php-ext-configure redis --enable-redis-igbinary \
-  && docker-php-ext-install -j$(nproc) redis
+  && cd /usr/src/php/ext/redis \
+  && phpize \
+  && ./configure --enable-redis-igbinary \
+  && make \
+  && make install \
+  && echo "extension=redis.so" > /etc/php7/conf.d/80_redis.ini \
+  && make distclean
+
+# remove phpize
+RUN apk del php7-dev
 
 # xdebug(2.7.2) extension=xdebug.so
-RUN if [ "${environment}" = "local" -o "${environment}" = "localforward" ]; then \
-     pecl install xdebug-2.7.2 \
-  && docker-php-ext-enable xdebug \
-  && echo "xdebug.remote_enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
-  && echo "xdebug.remote_connect_back=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
-  && echo "xdebug.remote_autostart=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+RUN if [ "${environment}" = "local" ]; then \
+     apk --no-cache add php7-pecl-xdebug \
+  && echo "zend_extension=xdebug.so" > /etc/php7/conf.d/xdebug.ini \
+  && echo "[XDebug]" >> /etc/php7/conf.d/xdebug.ini \
+  && echo "xdebug.remote_enable=1" >> /etc/php7/conf.d/xdebug.ini \
+  && echo "xdebug.remote_connect_back=0" >> /etc/php7/conf.d/xdebug.ini \
+  && echo "xdebug.remote_autostart=0" >> /etc/php7/conf.d/xdebug.ini \
   ; fi
+
+# TZ
+RUN cp /usr/share/zoneinfo/UTC /etc/localtime \
+  && echo "UTC" > /etc/timezone
+
+# supervisord
+RUN mkdir -p /etc/supervisor.d
+COPY supervisord.conf /etc/supervisord.conf
 
 # settings
 COPY settings.php /var/www/settings.php
 
-# PHP conf
-COPY php.ini /usr/local/etc/php/conf.d/php.ini
+# PHP
+COPY php.ini /php.ini
+COPY php-fpm.conf /php-fpm.conf
+COPY php-fpm-supervisor.conf /php-fpm-supervisor.conf
+RUN cp /php-fpm.conf /etc/php7/php-fpm.d/z-php.conf \
+  && cp /php.ini /etc/php7/conf.d/config.ini \
+  && cp /php-fpm-supervisor.conf /etc/supervisor.d/php-fpm.conf
 
-# COPY entrypoint
-COPY docker-php-entrypoint /docker-php-entrypoint
+# Nginx
 COPY nginx.conf /nginx.conf
 COPY nginx-server.conf /nginx-server.conf
-COPY zzz-socket.conf /zzz-socket.conf
-RUN if [ "${environment}" = "localforward" ]; then \
-     cp /docker-php-entrypoint /usr/local/bin/docker-php-entrypoint \
-  && chmod +x /usr/local/bin/docker-php-entrypoint \
-  && apk --no-cache add nginx \
-  && cp /nginx.conf /etc/nginx/nginx.conf \
+COPY nginx-supervisor.conf /nginx-supervisor.conf
+RUN cp /nginx.conf /etc/nginx/nginx.conf \
   && cp /nginx-server.conf /etc/nginx/conf.d/default.conf \
-  && mkdir /var/run/nginx \
-  && cp /zzz-socket.conf /usr/local/etc/php-fpm.d \
-  && mkdir /var/run/php-fpm \
-  && chown 1000:1000 /var/run/php-fpm \
-  ; fi
+  && cp /nginx-supervisor.conf /etc/supervisor.d/nginx.conf
 
 RUN apk del --purge .build-deps \
-  && docker-php-source delete \
   && rm -rf /var/cache/apk/* \
   && rm -rf /tmp/*
 
-RUN deluser www-data \
+RUN deluser nginx \
+    && delgroup www-data \
     && addgroup -g 1000 -S www-data \
-    && adduser -u 1000 -D -S -G www-data www-data
+    && adduser -u 1000 -D -S -G www-data www-data \
+    && adduser -u 1001 -D -S -G www-data nginx
 
+EXPOSE 3128
+
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
