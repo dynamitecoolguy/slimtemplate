@@ -465,7 +465,7 @@ echo "setUpEndClass:BEGIN\n";
 
         curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'storage');
         curl_setopt(static::$ch, CURLOPT_POST, true);
-        curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Contexnt-Type: multipart/form-data']);
+        curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);

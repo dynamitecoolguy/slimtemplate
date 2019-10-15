@@ -58,6 +58,7 @@ COPY supervisord.conf /etc/supervisord.conf
 
 # settings
 COPY settings.php /var/www/settings.php
+COPY settings-${environment}.yml /var/www/settings.yml
 
 # PHP
 COPY php.ini /php.ini
