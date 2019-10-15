@@ -7,40 +7,121 @@ $loader->addPsr4('Hoge\\', __DIR__ . '/../lib');
 $loader->addPsr4('Hoge\\Test\\', __DIR__ . '/../test');
 
 use Aws\DynamoDb\Exception\DynamoDbException;
+use Aws\S3\Exception\S3Exception;
 use CURLFile;
 use PHPUnit\Framework\TestCase;
 use \PDO;
 
 class RequestTest extends TestCase
 {
-    const URL_PREFIX = 'http://hoge.localhost/';
-
     protected static $ch;
+
+    private static function getSettingArray(): array
+    {
+        switch (getenv('environment')) {
+            case 'development':
+                return static::getSettingArrayDevelopment();
+        }
+        return static::getSettingArrayLocal();
+    }
+
+    private static function getSettingArrayLocal(): array
+    {
+        return [
+            'prefix' => 'http://hoge.localhost/',
+            'userdb' => [
+                'host' => '127.0.0.1',
+                'port' => 13306,
+                'dbname' => 'userdb',
+                'user' => 'scott',
+                'password' => 'tiger'
+            ],
+            'logdb' => [
+                'host' => '127.0.0.1',
+                'port' => 15432,
+                'dbname' => 'logdb',
+                'user' => 'root',
+                'password' => 'hogehoge'
+            ],
+            'dynamodb' => [
+                'endpoint' => 'http://127.0.0.1:18000',
+                'key' => 'dummy-key',
+                'secret' => 'dummy-secret',
+                'table' => 'hogehoge'
+            ],
+            'storage' => [
+                'endpoint' => 'http://127.0.0.1:19000',
+                'key' => 'minio',
+                'secret' => 'miniminio',
+                'bucket' => 'dummy'
+            ]
+        ];
+    }
+
+    private static function getSettingArrayDevelopment(): array
+    {
+        $ip = '13.113.92.135';
+        return [
+            'prefix' => 'http://' . $ip . '/',
+            'userdb' => [
+                'host' => $ip,
+                'port' => 13306,
+                'dbname' => 'userdb',
+                'user' => 'scott',
+                'password' => 'tiger'
+            ],
+            'logdb' => [
+                'host' => $ip,
+                'port' => 15432,
+                'dbname' => 'logdb',
+                'user' => 'root',
+                'password' => 'hogehoge'
+            ],
+            'dynamodb' => [
+                'endpoint' => 'http://' . $ip . ':18000',
+                'key' => 'dummy-key',
+                'secret' => 'dummy-secret',
+                'table' => 'hogehoge'
+            ],
+            'storage' => [
+                'endpoint' => 'http://' . $ip . ':19000',
+                'key' => 'minio',
+                'secret' => 'miniminio',
+                'bucket' => 'dummy'
+            ]
+        ];
+    }
 
     private static function setUpMySQL(): void
     {
-        $dsn = 'mysql:host=127.0.0.1;port=13306;dbname=userdb';
+        $setting = static::getSettingArray()['userdb'];
+
+        $dsn = 'mysql:host=' . $setting['host'] . ';port=' . (string)$setting['port'] . ';dbname=' . $setting['dbname'];
+        echo "DSN=$dsn\n";
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false
         ];
-        $pdo = new PDO($dsn, 'scott', 'tiger', $options);
+        $pdo = new PDO($dsn, $setting['user'], $setting['password'], $options);
         $stmt = $pdo->prepare('truncate player');
         $pdo->beginTransaction();
         $stmt->execute();
         $pdo->commit();
+        echo "MySQL done$dsn\n";
     }
 
     private static function setUpPostgreSQL(): void
     {
-        $dsn = 'pgsql:host=127.0.0.1;port=15432;dbname=logdb';
+        $setting = static::getSettingArray()['logdb'];
+
+        $dsn = 'pgsql:host=' . $setting['host']. ';port=' . (string)$setting['port']. ';dbname=' . $setting['dbname'];
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false
         ];
-        $pdo = new PDO($dsn, 'root', 'hogehoge', $options);
+        $pdo = new PDO($dsn, $setting['user'], $setting['password'], $options);
         $stmt = $pdo->prepare('truncate player_created_log');
         $pdo->beginTransaction();
         $stmt->execute();
@@ -54,13 +135,15 @@ class RequestTest extends TestCase
 
     private static function setUpDynamoDb(): void
     {
+        $setting = static::getSettingArray()['dynamodb'];
+
         $sdk = new \Aws\Sdk([
-            'endpoint' => 'http://127.0.0.1:18000',
+            'endpoint' => $setting['endpoint'],
             'region' => 'ap-northeast-1',
             'version' => '2012-08-10',
             'credentials' => [
-                'key' => 'dummy-key',
-                'secret' => 'dummy-secret'
+                'key' => $setting['key'],
+                'secret' => $setting['secret']
             ]
         ]);
 
@@ -68,10 +151,10 @@ class RequestTest extends TestCase
 
         try {
             $result = $dynamodb->describeTable([
-                'TableName' => 'hogehoge'
+                'TableName' => $setting['table']
             ]);
             $dynamodb->deleteTable([
-                'TableName' => 'hogehoge'
+                'TableName' => $setting['table']
             ]);
         } catch (DynamoDbException $ex) {
         }
@@ -79,13 +162,14 @@ class RequestTest extends TestCase
 
     private static function setUpS3(): void
     {
+        $setting = static::getSettingArray()['storage'];
         $sdk = new \Aws\Sdk([
-            'endpoint' => 'http://127.0.0.1:19000',
+            'endpoint' => $setting['endpoint'],
             'region' => 'ap-northeast-1',
             'version' => '2006-03-01',
             'credentials' => [
-                'key' => 'minio',
-                'secret' => 'miniminio'
+                'key' => $setting['key'],
+                'secret' => $setting['secret']
             ],
             //'bucket_endpoint' => true,
             'use_path_style_endpoint' => true
@@ -93,8 +177,14 @@ class RequestTest extends TestCase
 
         /** @var \Aws\S3\S3Client $s3 */
         $s3 = $sdk->createS3();
+        try {
+            $s3->createBucket([
+                'Bucket' => $setting['bucket']
+            ]);
+        } catch (S3Exception $e) {
+        }
         $s3->deleteObject([
-            'Bucket' => 'dummy',
+            'Bucket' => $setting['bucket'],
             'Key' => 'hogefile.txt'
         ]);
     }
@@ -103,11 +193,12 @@ class RequestTest extends TestCase
     {
         parent::setUpBeforeClass();
         static::$ch = curl_init();
-
+echo "setUpBeforeClass:BEGIN\n";
         static::setUpMySQL();
         static::setUpPostgreSQL();
         static::setUpDynamoDb();
         static::setUpS3();
+echo "setUpEndClass:BEGIN\n";
     }
 
     public static function tearDownAfterClass(): void
@@ -127,7 +218,8 @@ class RequestTest extends TestCase
      */
     public function top(): void
     {
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX);
+        $prefix = static::getSettingArray()['prefix'];
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix);
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $this->assertEquals($result, "BEFORE:Hello, World!:AFTER");
@@ -138,6 +230,8 @@ class RequestTest extends TestCase
      */
     public function player(): void
     {
+        $prefix = static::getSettingArray()['prefix'];
+
         /*
         $app->group('/player', function (RouteCollectorProxy $group) {
             $group->get('/{id}', PlayerController::class . ':get');
@@ -147,14 +241,14 @@ class RequestTest extends TestCase
         */
 
         // get but not found
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player/1');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player/1');
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
         curl_reset(static::$ch);
         $this->assertEquals($info['http_code'], 404);
 
         // post
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player');
         curl_setopt(static::$ch, CURLOPT_POST, true);
         curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, json_encode(['player_name' => 'PlayerName']));
@@ -164,7 +258,7 @@ class RequestTest extends TestCase
         $this->assertEquals($info['http_code'], 200);
 
         // get again
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player/1');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player/1');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -175,7 +269,7 @@ class RequestTest extends TestCase
         $this->assertEquals($player->player_name, 'PlayerName');
 
         // put
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player/1');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player/1');
         curl_setopt(static::$ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, json_encode(['player_name' => 'NewPlayerName']));
@@ -185,7 +279,7 @@ class RequestTest extends TestCase
         $this->assertEquals($info['http_code'], 200);
 
         // get again again
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player/1');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player/1');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -201,6 +295,8 @@ class RequestTest extends TestCase
      */
     public function playerCreated(): void
     {
+        $prefix = static::getSettingArray()['prefix'];
+
         /*
         $app->group('/player_created', function (RouteCollectorProxy $group) {
             $group->get('/{id}', PlayerCreatedLogController::class . ':get');
@@ -209,7 +305,7 @@ class RequestTest extends TestCase
         */
 
         // get
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player_created/2');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player_created/2');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -221,7 +317,7 @@ class RequestTest extends TestCase
         $this->assertEquals($playerCreated->created_at, '2019-10-03 15:00:00');
 
         // list
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'player_created');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'player_created');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -243,6 +339,8 @@ class RequestTest extends TestCase
      */
     public function redis(): void
     {
+        $prefix = static::getSettingArray()['prefix'];
+
         /*
         $app->group('/redis', function (RouteCollectorProxy $group) {
             $group->get('/{key}', RedisController::class . ':get');
@@ -253,14 +351,14 @@ class RequestTest extends TestCase
         */
 
         // get but not found
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'redis/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'redis/hoge');
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
         curl_reset(static::$ch);
         $this->assertEquals($info['http_code'], 404);
 
         // post
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'redis');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'redis');
         curl_setopt(static::$ch, CURLOPT_POST, true);
         curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, json_encode(['key' => 'hoge', 'value' => 'hogehoge']));
@@ -270,7 +368,7 @@ class RequestTest extends TestCase
         $this->assertEquals($info['http_code'], 200);
 
         // get again
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'redis/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'redis/hoge');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -279,7 +377,7 @@ class RequestTest extends TestCase
         $this->assertEquals($result, 'hogehoge');
 
         // delete
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'redis/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'redis/hoge');
         curl_setopt(static::$ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -287,7 +385,7 @@ class RequestTest extends TestCase
         $this->assertEquals($info['http_code'], 200);
 
         // get again twice
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'redis/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'redis/hoge');
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
         curl_reset(static::$ch);
@@ -299,6 +397,8 @@ class RequestTest extends TestCase
      */
     public function dynamodb(): void
     {
+        $prefix = static::getSettingArray()['prefix'];
+
         /*
         $app->group('/dynamodb', function (RouteCollectorProxy $group) {
             $group->get('/{key}', DynamodbController::class . ':get');
@@ -306,14 +406,14 @@ class RequestTest extends TestCase
         });
         */
         // get but not found
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'dynamodb/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'dynamodb/hoge');
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
         curl_reset(static::$ch);
         $this->assertEquals($info['http_code'], 404);
 
         // post
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'dynamodb');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'dynamodb');
         curl_setopt(static::$ch, CURLOPT_POST, true);
         curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, json_encode(['key' => 'hoge', 'value' => 'hogehoge']));
@@ -323,7 +423,7 @@ class RequestTest extends TestCase
         $this->assertEquals($info['http_code'], 200);
 
         // get again
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'dynamodb/hoge');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'dynamodb/hoge');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -339,6 +439,8 @@ class RequestTest extends TestCase
      */
     public function storage(): void
     {
+        $prefix = static::getSettingArray()['prefix'];
+
         /*
         $app->group('/storage', function (RouteCollectorProxy $group) {
             $group->get('/{filename}', StorageController::class . ':get');
@@ -346,7 +448,7 @@ class RequestTest extends TestCase
         });
          */
         // get but not found
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'storage/hogefile.txt');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'storage/hogefile.txt');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
@@ -361,7 +463,7 @@ class RequestTest extends TestCase
         $curlFile = new CURLFile($tmpFileName, 'text/plain', 'hogefile.txt');
         $data = ['upload' => $curlFile];
 
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'storage');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'storage');
         curl_setopt(static::$ch, CURLOPT_POST, true);
         curl_setopt(static::$ch, CURLOPT_HTTPHEADER, ['Contexnt-Type: multipart/form-data']);
         curl_setopt(static::$ch, CURLOPT_POSTFIELDS, $data);
@@ -372,7 +474,7 @@ class RequestTest extends TestCase
         $this->assertEquals($result, 'http://storage:9000/dummy/hogefile.txt');
 
         // get again
-        curl_setopt(static::$ch, CURLOPT_URL, self::URL_PREFIX . 'storage/hogefile.txt');
+        curl_setopt(static::$ch, CURLOPT_URL, $prefix . 'storage/hogefile.txt');
         curl_setopt(static::$ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec(static::$ch);
         $info = curl_getinfo(static::$ch);
