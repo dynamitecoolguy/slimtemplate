@@ -1,0 +1,31 @@
+#!/bin/bash
+cat <<'SYS_EOF' >> /etc/sysctl.conf
+net.core.somaxconn=65535
+SYS_EOF
+
+sysctl -p /etc/sysctl.conf
+
+cat > /etc/security/limits.d/20-filelimits.conf <<'FLIMIT_EOF'
+*    soft    nofile    32768
+*    hard    nofile    32768
+FLIMIT_EOF
+ulimit -n 32768
+
+amazon-linux-extras install docker -y
+systemctl enable docker
+usermod -a -G docker ec2-user
+service docker start
+
+curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+yum install -yq git
+
+cd /home/ec2-user
+git clone https://github.com/dynamitecoolguy/slimtemplate.git
+cd slimtemplate
+git checkout chapter12
+chown -R ec2-user:ec2-user .
+
+cd compose
+docker-compose -f docker-compose-common.yml -f docker-compose-development.yml up -d
