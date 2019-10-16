@@ -24,11 +24,11 @@ class DynamodbController
         // dummy table
         try {
             $result = $dynamodb->describeTable([
-                'TableName' => 'hogehoge'
+                'TableName' => $this->getTable(),
             ]);
         } catch (DynamoDbException $ex) {
             $result = $dynamodb->createTable([
-                'TableName' => 'hogehoge',
+                'TableName' => $this->getTable(),
                 'AttributeDefinitions' => [
                     [
                         'AttributeName' => 'key',
@@ -60,7 +60,7 @@ class DynamodbController
 
         try {
             $result = $dynamodb->getItem([
-                'TableName' => 'hogehoge',
+                'TableName' => $this->getTable(),
                 'Key' => $record
             ]);
         } catch (DynamoDbException $ex) {
@@ -87,8 +87,14 @@ class DynamodbController
         $marshaller = new Marshaler();
         $record = $marshaller->marshalItem(['key'=>$key, 'value'=>$value]);
 
-        $dynamodb->putItem(['TableName'=>'hogehoge', 'Item'=>$record]);
+        $dynamodb->putItem(['TableName'=>$this->getTable(), 'Item'=>$record]);
         $response->getBody()->write('OK');
         return $response;
+    }
+
+    private function getTable(): string
+    {
+        $setting = $this->container->get('settings')['dynamodb'];
+        return $setting['table'];
     }
 }

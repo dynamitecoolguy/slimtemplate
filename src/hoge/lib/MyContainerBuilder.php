@@ -21,7 +21,7 @@ class MyContainerBuilder extends ContainerBuilder
 
     private function addDefaultDefinitions(): void
     {
-        $parsed = yaml_parse(__DIR__ . '/../../settings.yml');
+        $parsed = yaml_parse_file(__DIR__ . '/../../settings.yml');
 
         $this->addDefinitions(['settings' => $parsed]);
         $this->addDefinitions([
@@ -65,8 +65,8 @@ class MyContainerBuilder extends ContainerBuilder
                     'region' => $settings['region'],
                     'version' => '2012-08-10',
                     'credentials' => [
-                        'key' => 'dummy-key',
-                        'secret' => 'dummy-secret'
+                        'key' => $settings['key'],
+                        'secret' => $settings['secret']
                     ]
                 ]);
 
@@ -81,10 +81,9 @@ class MyContainerBuilder extends ContainerBuilder
                     'region' => $settings['region'],
                     'version' => '2006-03-01',
                     'credentials' => [
-                        'key' => 'minio',
-                        'secret' => 'miniminio'
+                        'key' => $settings['key'],
+                        'secret' => $settings['secret']
                     ],
-                    //'bucket_endpoint' => true,
                     'use_path_style_endpoint' => true
                 ]);
                 $s3 = $sdk->createS3();

@@ -27,69 +27,33 @@ class RequestTest extends TestCase
 
     private static function getSettingArrayLocal(): array
     {
-        return [
-            'prefix' => 'http://hoge.localhost/',
-            'userdb' => [
-                'host' => '127.0.0.1',
-                'port' => 13306,
-                'dbname' => 'userdb',
-                'user' => 'scott',
-                'password' => 'tiger'
-            ],
-            'logdb' => [
-                'host' => '127.0.0.1',
-                'port' => 15432,
-                'dbname' => 'logdb',
-                'user' => 'root',
-                'password' => 'hogehoge'
-            ],
-            'dynamodb' => [
-                'endpoint' => 'http://127.0.0.1:18000',
-                'key' => 'dummy-key',
-                'secret' => 'dummy-secret',
-                'table' => 'hogehoge'
-            ],
-            'storage' => [
-                'endpoint' => 'http://127.0.0.1:19000',
-                'key' => 'minio',
-                'secret' => 'miniminio',
-                'bucket' => 'dummy'
-            ]
-        ];
+        $setting = yaml_parse_file(__DIR__ . '/../../../compose/web_hoge/settings-local.yml');
+
+        $setting['prefix'] = 'http://hoge.localhost/';
+        $setting['userdb']['host'] = '127.0.0.1';
+        $setting['userdb']['port'] = 13306;
+        $setting['logdb']['host'] = '127.0.0.1';
+        $setting['logdb']['port'] = 15432;
+        $setting['dynamodb']['endpoint'] = 'http://127.0.0.1:18000';
+        $setting['storage']['endpoint'] = 'http://127.0.0.1:19000';
+
+        return $setting;
     }
 
     private static function getSettingArrayDevelopment(): array
     {
+        $setting = yaml_parse_file(__DIR__ . '/../../../compose/web_hoge/settings-development.yml');
         $ip = '13.113.92.135';
-        return [
-            'prefix' => 'http://' . $ip . '/',
-            'userdb' => [
-                'host' => $ip,
-                'port' => 13306,
-                'dbname' => 'userdb',
-                'user' => 'scott',
-                'password' => 'tiger'
-            ],
-            'logdb' => [
-                'host' => $ip,
-                'port' => 15432,
-                'dbname' => 'logdb',
-                'user' => 'root',
-                'password' => 'hogehoge'
-            ],
-            'dynamodb' => [
-                'endpoint' => 'http://' . $ip . ':18000',
-                'key' => 'dummy-key',
-                'secret' => 'dummy-secret',
-                'table' => 'hogehoge'
-            ],
-            'storage' => [
-                'endpoint' => 'http://' . $ip . ':19000',
-                'key' => 'minio',
-                'secret' => 'miniminio',
-                'bucket' => 'dummy'
-            ]
-        ];
+
+        $setting['prefix'] = 'http://' . $ip . '/';
+        $setting['userdb']['host'] = $ip;
+        $setting['userdb']['port'] = 13306;
+        $setting['logdb']['host'] = $ip;
+        $setting['logdb']['port'] = 15432;
+        $setting['dynamodb']['endpoint'] = 'http://' . $ip . ':18000';
+        $setting['storage']['endpoint'] = 'http://' . $ip . ':19000';
+
+        return $setting;
     }
 
     private static function setUpMySQL(): void

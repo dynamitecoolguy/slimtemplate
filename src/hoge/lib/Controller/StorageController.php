@@ -21,12 +21,12 @@ class StorageController
         /** @var \Aws\S3\S3Client $s3 */
         $s3 = $this->container->get('storage');
         try {
-            $s3->headBucket(['Bucket' => 'dummy']);
+            $s3->headBucket(['Bucket' => $this->getBucket()]);
         } catch (S3Exception $ex) {
             $errorCode = $ex->getAwsErrorCode();
             if ($errorCode === 'NotFound') {
                 $s3->createBucket([
-                    'Bucket' => 'dummy',
+                    'Bucket' => $this->getBucket(),
                     'CreateBucketConfiguration' => [
                         'LocationConstraint' => 'ap-northeast-1'
                     ]
@@ -35,7 +35,7 @@ class StorageController
         }
     }
 
-    public function get(Request $request, Response $response, array $args) : Response
+    public function get(Request $request, Response $response, array $args): Response
     {
         // parameters (id)
         $key = $args['filename'];
@@ -45,7 +45,7 @@ class StorageController
 
         try {
             $result = $s3->getObject([
-                'Bucket' => 'dummy',
+                'Bucket' => $this->getBucket(),
                 'Key' => $key
             ]);
         } catch (S3Exception $ex) {
@@ -57,7 +57,7 @@ class StorageController
         return $newResponse;
     }
 
-    public function post(Request $request, Response $response, array $args) : Response
+    public function post(Request $request, Response $response, array $args): Response
     {
         $files = $request->getUploadedFiles();
         /** @var \Psr\Http\Message\UploadedFileInterface $uploadedFile */
@@ -73,7 +73,7 @@ class StorageController
         $s3 = $this->container->get('storage');
 
         $result = $s3->putObject([
-            'Bucket' => 'dummy',
+            'Bucket' => $this->getBucket(),
             'Key' => $clientFileName,
             'Body' => $uploadedFile->getStream()
         ]);
@@ -82,4 +82,11 @@ class StorageController
         $response->getBody()->write($url);
         return $response;
     }
+
+    private function getBucket(): string
+    {
+        $setting = $this->container->get('settings')['storage'];
+        return $setting['bucket'];
+    }
 }
+
