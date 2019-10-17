@@ -21,6 +21,8 @@ class RequestTest extends TestCase
         switch (getenv('environment')) {
             case 'development':
                 return static::getSettingArrayDevelopment();
+            case 'devaws':
+                return static::getSettingArrayDevaws();
         }
         return static::getSettingArrayLocal();
     }
@@ -56,9 +58,28 @@ class RequestTest extends TestCase
         return $setting;
     }
 
+    private static function getSettingArrayDevaws(): array
+    {
+        $setting = yaml_parse_file(__DIR__ . '/../../../compose/web_hoge/settings-devaws.yml');
+        $ip = '13.113.92.135';
+
+        $setting['prefix'] = 'http://' . $ip . '/';
+        $setting['userdb']['host'] = $ip;
+        $setting['userdb']['port'] = 13306;
+        $setting['logdb']['host'] = $ip;
+        $setting['logdb']['port'] = 15432;
+        $setting['dynamodb']['endpoint'] = 'http://' . $ip . ':18000';
+        $setting['storage']['endpoint'] = 'http://' . $ip . ':19000';
+
+        return $setting;
+    }
+
     private static function setUpMySQL(): void
     {
         $setting = static::getSettingArray()['userdb'];
+        if ($setting === false) {
+            return;
+        }
 
         $dsn = 'mysql:host=' . $setting['host'] . ';port=' . (string)$setting['port'] . ';dbname=' . $setting['dbname'];
         echo "DSN=$dsn\n";
@@ -78,6 +99,9 @@ class RequestTest extends TestCase
     private static function setUpPostgreSQL(): void
     {
         $setting = static::getSettingArray()['logdb'];
+        if ($setting === false) {
+            return;
+        }
 
         $dsn = 'pgsql:host=' . $setting['host']. ';port=' . (string)$setting['port']. ';dbname=' . $setting['dbname'];
         $options = [
@@ -100,6 +124,9 @@ class RequestTest extends TestCase
     private static function setUpDynamoDb(): void
     {
         $setting = static::getSettingArray()['dynamodb'];
+        if ($setting === false) {
+            return;
+        }
 
         $sdk = new \Aws\Sdk([
             'endpoint' => $setting['endpoint'],
@@ -127,6 +154,10 @@ class RequestTest extends TestCase
     private static function setUpS3(): void
     {
         $setting = static::getSettingArray()['storage'];
+        if ($setting === false) {
+            return;
+        }
+
         $sdk = new \Aws\Sdk([
             'endpoint' => $setting['endpoint'],
             'region' => 'ap-northeast-1',

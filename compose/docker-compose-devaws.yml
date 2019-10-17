@@ -1,0 +1,99 @@
+version: '3'
+
+services:
+  web_front:
+    build:
+      context: ./web_front
+      args:
+        - environment=devaws
+    ports:
+      - "80:3128"
+      - "443:8443"
+    volumes:
+      - ../certs:/etc/certs:ro
+    container_name: web_front
+    networks:
+      - private_net
+
+  web_hoge:
+    build:
+      context: ./web_hoge
+      args:
+        - environment=devaws
+    volumes:
+      - ../src/hoge:/var/www/hoge
+      - ../src/vendor:/var/www/vendor
+    container_name: web_hoge
+    networks:
+      - private_net
+
+  redis:
+    build:
+      context: ./redis
+    volumes:
+      - redis-data:/var/lib/redis
+    ports:
+      - "16379:6379"
+    sysctls:
+      - net.core.somaxconn=1024
+    container_name: redis
+    networks:
+      - private_net
+
+  mysql:
+    build:
+      context: ./mysql
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "13306:3306"
+    container_name: mysql
+    networks:
+      - private_net
+
+  postgresql:
+    build:
+      context: ./postgresql
+    volumes:
+      - postgresql-data:/var/lib/postgresql
+    ports:
+      - "15432:5432"
+    container_name: postgresql
+    networks:
+      - private_net
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb
+    ports:
+      - "18000:8000"
+    networks:
+      - private_net
+
+  storage:
+    image: minio/minio
+    volumes:
+      - storage-data:/data
+    container_name: storage
+    ports:
+      - "19000:9000"
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: miniminio
+    command: server /data
+    networks:
+      - private_net
+
+volumes:
+  redis-data:
+  mysql-data:
+  postgresql-data:
+  storage-data:
+
+networks:
+  private_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/24
