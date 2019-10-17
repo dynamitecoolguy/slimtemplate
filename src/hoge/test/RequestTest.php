@@ -64,11 +64,10 @@ class RequestTest extends TestCase
         $ip = '13.113.92.135';
 
         $setting['prefix'] = 'http://' . $ip . '/';
-        $setting['userdb']['host'] = $ip;
-        $setting['userdb']['port'] = 13306;
+        $setting['userdb'] = false;
         $setting['logdb']['host'] = $ip;
         $setting['logdb']['port'] = 15432;
-        $setting['dynamodb']['endpoint'] = 'http://' . $ip . ':18000';
+        $setting['dynamodb'] = false;
         $setting['storage']['endpoint'] = 'http://' . $ip . ':19000';
 
         return $setting;
