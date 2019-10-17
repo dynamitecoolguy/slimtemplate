@@ -27,30 +27,6 @@ services:
     networks:
       - private_net
 
-  redis:
-    build:
-      context: ./redis
-    volumes:
-      - redis-data:/var/lib/redis
-    ports:
-      - "16379:6379"
-    sysctls:
-      - net.core.somaxconn=1024
-    container_name: redis
-    networks:
-      - private_net
-
-  mysql:
-    build:
-      context: ./mysql
-    volumes:
-      - mysql-data:/var/lib/mysql
-    ports:
-      - "13306:3306"
-    container_name: mysql
-    networks:
-      - private_net
-
   postgresql:
     build:
       context: ./postgresql
@@ -59,14 +35,6 @@ services:
     ports:
       - "15432:5432"
     container_name: postgresql
-    networks:
-      - private_net
-
-  dynamodb:
-    image: amazon/dynamodb-local
-    container_name: dynamodb
-    ports:
-      - "18000:8000"
     networks:
       - private_net
 
@@ -85,8 +53,6 @@ services:
       - private_net
 
 volumes:
-  redis-data:
-  mysql-data:
   postgresql-data:
   storage-data:
 
