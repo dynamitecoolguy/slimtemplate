@@ -1,7 +1,7 @@
 userdb:
   host: mysql
   dbname: userdb
-  user: $$USER_DB_USER$$
+  user: scott
   password: tiger
 
 logdb:
