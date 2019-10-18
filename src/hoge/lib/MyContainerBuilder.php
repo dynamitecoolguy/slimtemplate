@@ -201,33 +201,29 @@ class MyContainerBuilder extends ContainerBuilder
                 }
             }
         }
+
+        // SystemManagerのパラメータストアから値を一斉に取得
         try {
             $result = $ssm->getParameters([
                 'Names' => $keys
             ]);
         } catch (AwsException $e) {
-            var_dump($e->getAwsErrorMessage());
             return false;  // TODO: 本当はException
         }
 
-        var_dump($result);
-
-        return false;
-/*
-        // jsonデータを展開し、apcuとローカルに格納する
-        foreach (json_decode($secret, true) as $key => $value) {
-            if (!apcu_exists($key)) {
-                apcu_store($key, $value, static::SECRET_TTL);
+        foreach ($result['Parameters'] as $parameter) {
+            $name = $parameter['Name'];
+            $value = $parameter['Value'];
+            if (!apcu_exists($name)) {
+                apcu_store($name, $value, static::PARAMETER_TTL);
             }
-            $this->replacedText[$key] = $value;
+            $this->replacedText[$name] = $value;
         }
 
         if (!isset($this->replacedText[$original])) {
             return false; // TODO: 本当はException
         }
-
         return $this->replacedText[$original];
-*/
     }
 }
 
