@@ -27,35 +27,6 @@ services:
     networks:
       - private_net
 
-  postgresql:
-    build:
-      context: ./postgresql
-    volumes:
-      - postgresql-data:/var/lib/postgresql
-    ports:
-      - "15432:5432"
-    container_name: postgresql
-    networks:
-      - private_net
-
-  storage:
-    image: minio/minio
-    volumes:
-      - storage-data:/data
-    container_name: storage
-    ports:
-      - "19000:9000"
-    environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: miniminio
-    command: server /data
-    networks:
-      - private_net
-
-volumes:
-  postgresql-data:
-  storage-data:
-
 networks:
   private_net:
     driver: bridge
