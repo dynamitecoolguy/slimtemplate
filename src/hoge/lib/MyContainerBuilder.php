@@ -158,15 +158,15 @@ class MyContainerBuilder extends ContainerBuilder
         }
 
         $value = $setting[$key];
-        if (strpos('{{', $value) === false) {
+        if (strpos($value, '$$') === false) {
             return $value; // 置換の必要が無ければその値のまま返す
         }
 
-        if (preg_match('/^(.*){{(.*)}}(.*)$/', $value, $matches)) { // {{KEY_NAME}}か?
+        if (!preg_match('/^(.*)\$\$(.*)\$\$(.*)$/', $value, $matches)) { // {{KEY_NAME}}か?
             return $value; // 置換の必要が無ければその値のまま返す
         }
 
-        return $matches[0] . $this->replaceValue($matches[1]) . $matches[2];
+        return $matches[1] . $this->replaceValue($matches[2]) . $matches[3];
     }
 
     /**
@@ -208,7 +208,7 @@ class MyContainerBuilder extends ContainerBuilder
         }
 
         // jsonデータを展開し、apcuとローカルに格納する
-        foreach (json_decode($secret) as $key => $value) {
+        foreach (json_decode($secret, true) as $key => $value) {
             if (!apcu_exists($key)) {
                 apcu_store($key, $value, static::SECRET_TTL);
             }
