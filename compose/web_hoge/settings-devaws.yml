@@ -26,3 +26,7 @@ storage:
   key: $$STORAGE_ACCESS_KEY$$
   secret: $$STORAGE_SECRET$$
   bucket: $$STORAGE_BUCKET$$
+
+ssm:
+  endpoint: http://ssm.ap-northeast-1.amazonaws.com
+  region: ap-northeast-1

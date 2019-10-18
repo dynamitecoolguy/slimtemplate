@@ -1,7 +1,7 @@
 userdb:
   host: mysql
   dbname: userdb
-  user: scott
+  user: $$USER_DB_USER$$
   password: tiger
 
 logdb:
@@ -26,3 +26,7 @@ storage:
   key: minio
   secret: miniminio
   bucket: dummy
+
+ssm:
+  endpoint: http://ssm.ap-northeast-1.amazonaws.com
+  region: ap-northeast-1

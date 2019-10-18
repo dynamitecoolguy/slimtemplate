@@ -57,7 +57,7 @@ RUN mkdir -p /etc/supervisor.d
 COPY supervisord.conf /etc/supervisord.conf
 
 # settings
-COPY settings-${environment}.yml /var/www/settings.yml
+COPY settings-${environment}.yml /usr/local/etc/myapp/settings.yml
 
 # PHP
 COPY php.ini /php.ini

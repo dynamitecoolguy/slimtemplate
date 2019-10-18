@@ -19,6 +19,7 @@ services:
     volumes:
       - ../src/hoge:/var/www/hoge
       - ../src/vendor:/var/www/vendor
+      - ../credentials:/usr/local/etc/myapp/credentials
     container_name: web_hoge
     networks:
       - private_net
