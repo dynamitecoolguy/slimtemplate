@@ -206,7 +206,7 @@ class MyContainerBuilder extends ContainerBuilder
                 'Names' => $keys
             ]);
         } catch (AwsException $e) {
-            var_dump($e);
+            var_dump($e->getAwsErrorMessage());
             return false;  // TODO: 本当はException
         }
 
