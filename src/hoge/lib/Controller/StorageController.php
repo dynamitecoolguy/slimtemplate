@@ -3,12 +3,16 @@
 namespace Hoge\Controller;
 
 use Aws\S3\Exception\S3Exception;
+use Hoge\ApplicationSetting;
+use PharIo\Manifest\Application;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Container\ContainerInterface;
 
 class StorageController
 {
+    private $targetBucket = null;
+
     /**
      * @var ContainerInterface
      */
@@ -85,8 +89,12 @@ class StorageController
 
     private function getBucket(): string
     {
-        $setting = $this->container->get('settings')['storage'];
-        return $setting['bucket'];
+        if (is_null($this->targetBucket)) {
+            $setting = ApplicationSetting::getInstance();
+            $this->targetBucket = $setting->getSettingValue('storage', 'bucket');
+        }
+        return $this->targetBucket;
     }
 }
+
 
