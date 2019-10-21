@@ -11,6 +11,9 @@ use Psr\Container\ContainerInterface;
 
 class StorageController
 {
+    /**
+     * @var string
+     */
     private $targetBucket = null;
 
     /**

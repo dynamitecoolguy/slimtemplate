@@ -5,12 +5,18 @@ namespace Hoge\Controller;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
+use Hoge\ApplicationSetting;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Container\ContainerInterface;
 
 class DynamodbController
 {
+    /**
+     * @var string
+     */
+    private $targetTable = null;
+
     /**
      * @var ContainerInterface
      */
@@ -94,7 +100,10 @@ class DynamodbController
 
     private function getTable(): string
     {
-        $setting = $this->container->get('settings')['dynamodb'];
-        return $setting['table'];
+        if (is_null($this->targetTable)) {
+            $setting = ApplicationSetting::getInstance();
+            $this->targetTable = $setting->getSettingValue('dynamodb', 'table');
+        }
+        return $this->targetTable;
     }
 }
