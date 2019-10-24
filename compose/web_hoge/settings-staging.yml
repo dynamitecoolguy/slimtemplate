@@ -1,0 +1,32 @@
+userdb:
+  host: mydbinstance.csvkmjl9r9hs.ap-northeast-1.rds.amazonaws.com
+  dbname: userdb
+  user: $$USER_DB_USER$$
+  password: $$USER_DB_PASSWORD$$
+
+logdb:
+  host: logdbinstance.csvkmjl9r9hs.ap-northeast-1.rds.amazonaws.com
+  dbname: logdb
+  user: $$LOG_DB_USER$$
+  password: $$LOG_DB_PASSWORD$$
+
+redis:
+  host: myredis.g3vevh.ng.0001.apne1.cache.amazonaws.com
+
+dynamodb:
+  endpoint: https://dynamodb.ap-northeast-1.amazonaws.com
+  region: ap-northeast-1
+  key: $$DYNAMODB_ACCESS_KEY$$
+  secret: $$DYNAMODB_SECRET$$
+  table: mydynamo
+
+storage:
+  endpoint: https://s3.ap-northeast-1.amazonaws.com
+  region: ap-northeast-1
+  key: $$STORAGE_ACCESS_KEY$$
+  secret: $$STORAGE_SECRET$$
+  bucket: $$STORAGE_BUCKET$$
+
+ssm:
+  endpoint: https://ssm.ap-northeast-1.amazonaws.com
+  region: ap-northeast-1
