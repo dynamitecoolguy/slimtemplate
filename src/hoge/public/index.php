@@ -29,7 +29,7 @@ $contentLengthMiddleware = new \Slim\Middleware\ContentLengthMiddleware();
 $app->add($contentLengthMiddleware);
 
 $app->get('/', function (Request $request, Response $response, array $args) {
-    $response->getBody()->write('Hello, World!');
+    $response->getBody()->write('Hello, World2!');
     return $response;
 })
     ->add(new ExampleBeforeMiddleware())
