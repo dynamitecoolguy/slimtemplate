@@ -90,5 +90,6 @@ COPY src/vendor /var/www/vendor
 COPY credentials /usr/local/etc/myapp/credentials
 
 EXPOSE 3128
+EXPOSE 3129
 
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
